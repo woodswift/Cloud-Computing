@@ -10,29 +10,24 @@ import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
+import org.apache.hadoop.util.GenericOptionsParser;
 
 public class Ngram {
-	
+	//size stores the variable meaning the size of n-gram
+	private static int size;
+
+	public static void setSize(int n) {
+		size=n;
+	}
+
+	public static int getSize() {
+		return size;
+	}
+		
 	//changes to Map class and function are noted
 	public static class NgramMapper extends Mapper<Object, Text, Text, IntWritable> {
 		private final static IntWritable one = new IntWritable(1);
 		private Text word = new Text();
-		
-		//Method to receive the size of each n-gram element
-		public static int getSize(){
-			Scanner in=new Scanner(System.in);
-			int x;
-			//x stores the input from the keyboard
-			System.out.println("Please enter the size of each n-gram element:");
-			//instruction to enter the size of each n-gram element
-			if(in.hasNextInt()){
-				x=in.nextInt();
-				//x stores the input from the keyboard
-			}
-			in.close();
-			//close Scanner
-			return x;
-		}
 		
 		//Method to generate n-gram sequence
 		public static List<String> ngrams(String str, int n) {
@@ -44,7 +39,7 @@ public class Ngram {
 		
 		//n-gram map Method
 		public void map(Object key, Text value, Context context)
-				throws IOException, InterruptedException {
+				throws IOException, InterruptedException {	
 			int n=getSize();
 			List<String> itr = ngrams(value.toString(), n);
 			//walk through n-gram sequence
@@ -71,6 +66,13 @@ public class Ngram {
 	
 	public static void main(String[] args) throws Exception {
 		Configuration conf = new Configuration();
+		String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
+		if (otherArgs.length < 3) {
+			System.err.println("Usage: wordcount <in> [<in>…] <out> N");
+			System.exit(2);
+		}
+		setSize(Integer.parseInt(otherArgs[2]));
+		System.out.println(getSize() + "-gram started!");
 		Job job = Job.getInstance(conf, "n-gram");
 		job.setJarByClass(Ngram.class);
 		job.setMapperClass(NgramMapper.class);
